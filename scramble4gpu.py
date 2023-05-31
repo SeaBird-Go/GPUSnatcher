@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+'''
+Copyright (c) 2023 by Haiming Zhang. All Rights Reserved.
+
+Author: Haiming Zhang
+Date: 2023-05-31 14:00:23
+Email: haimingzhang@link.cuhk.edu.cn
+Description: We can use this code to scramble GPU for training. Example: 
+    python scramble4gpu.py -p 0.8 -n 1 -t 1800 -e ./email_conf.json
+Reference: https://github.com/wilmerwang/GPUSnatcher
+'''
 import os
 import time
 import argparse
@@ -26,7 +36,7 @@ def set_parser():
     parser.add_argument('-n', '--gpu_nums', type=int, default=1,
                         help='The numbers of GPU to scramble')
     parser.add_argument('-t', '--times', type=int, default=1800,
-                        help='Sleep time if scramble gpu')
+                        help='Waiting time before releasing if we have scrambled gpu')
     parser.add_argument('-e', '--email_conf', type=str, default='./email_conf.json',
                         help='The path to email config')
     args = parser.parse_args()
@@ -136,12 +146,13 @@ def main(args, ids):
                 ids.append(gpus_id)
                 print("Scramble GPU {}".format(gpus_id))
                 _thread.start_new_thread(worker, (gpus_id, size))
-                time.sleep(30)
+                time.sleep(10)
 
             hostname = socket.gethostname()
             gpu_ids = ', '.join(gpus_free[:sca_nums].astype('str'))
             subject = f"{hostname}: GPU {gpu_ids} has been scrambled"
             content = f"{hostname}: GPU {gpu_ids} has been scrambled, and will be released in {args.times//60} minutes!"
+            print(subject, content)
             email_sender.send_email(email_conf['receiver'], subject, content)
 
 
