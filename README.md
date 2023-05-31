@@ -1,5 +1,7 @@
 # GPUSnatcher
 
+参考: https://github.com/wilmerwang/GPUSnatcher
+
 GPUSnatcher是用来在抢占显卡的脚本，主要是在实验室显卡资源紧张且自己亟需使用显卡的情况下，使用该脚本自动抢占一个或多个显卡。
 
 **建议将scramble4gpu.py更改为train.py，并设置仅自己可见，防止被打...**
