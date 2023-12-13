@@ -159,6 +159,8 @@ def main(args, ids):
 if __name__ == '__main__':
     ids = []
     args = set_parser()
+    # change the time from minute to second
+    args.times *= 60
     while True:
         main(args, ids)
         if len(ids) >= args.gpu_nums:
