@@ -55,7 +55,7 @@ def parse(qargs, results):
 
 def query_gpu():
     qargs = ['index', 'memory.free', 'memory.total']
-    cmd = 'nvidia-smi --query-gpu={} --format=csv, noheader'.format(','.join(qargs))
+    cmd = 'nvidia-smi --query-gpu={} --format=csv,noheader'.format(','.join(qargs))
     results = os.popen(cmd).readlines()
 
     return parse(qargs, results), results[0].strip()
