@@ -6,7 +6,7 @@ Author: Haiming Zhang
 Date: 2023-05-31 14:00:23
 Email: haimingzhang@link.cuhk.edu.cn
 Description: We can use this code to scramble GPU for training. Example: 
-    python scramble4gpu.py -p 0.8 -n 1 -t 1800 -e ./email_conf.json
+    python train.py -p 0.8 -n 1 -t 60 -e ./email_conf.json
 Reference: https://github.com/wilmerwang/GPUSnatcher
 '''
 import os
@@ -33,11 +33,13 @@ def set_parser():
     parser = argparse.ArgumentParser(description='..')
     parser.add_argument('-p', '--proportion', type=float, default=0.8,
                         help='The ratio of gpu free memory to total memory')
-    parser.add_argument('-n', '--gpu_nums', type=int, default=1,
+    parser.add_argument('-n', '--gpu_nums', type=int, default=8,
                         help='The numbers of GPU to scramble')
-    parser.add_argument('-t', '--times', type=int, default=1800,
-                        help='Waiting time before releasing if we have scrambled gpu')
+    parser.add_argument('-t', '--times', type=int, default=60,
+                        help='Waiting time (in minutes) before releasing if we have scrambled gpu')
     parser.add_argument('-e', '--email_conf', type=str, default='./email_conf.json',
+                        help='The path to email config')
+    parser.add_argument('-s', '--send_email', action='store_true', default=False,
                         help='The path to email config')
     args = parser.parse_args()
 
@@ -46,7 +48,7 @@ def set_parser():
 
 def parse(qargs, results):
     result_np = []
-    for line in results[1:]:
+    for line in results:
         result_np.append([''.join(filter(str.isdigit, word)) for word in line.split(',')])
     result_np = np.array(result_np)
 
@@ -136,7 +138,7 @@ def main(args, ids):
     gpus_free, gpus_memory = gpu_manager.choose_free_gpu()
 
     if len(gpus_free) == 0:
-        # print('No free GPUs, waiting for someone else to release.')
+        print('No free GPUs, waiting for someone else to release.')
         pass
     else:
         sca_nums = args.gpu_nums - len(ids)
@@ -146,14 +148,15 @@ def main(args, ids):
                 ids.append(gpus_id)
                 print("Scramble GPU {}".format(gpus_id))
                 _thread.start_new_thread(worker, (gpus_id, size))
-                time.sleep(10)
+                time.sleep(5)
 
             hostname = socket.gethostname()
             gpu_ids = ', '.join(gpus_free[:sca_nums].astype('str'))
             subject = f"{hostname}: GPU {gpu_ids} has been scrambled"
             content = f"{hostname}: GPU {gpu_ids} has been scrambled, and will be released in {args.times//60} minutes!"
             print(subject, content)
-            email_sender.send_email(email_conf['receiver'], subject, content)
+            if args.send_email:
+                email_sender.send_email(email_conf['receiver'], subject, content)
 
 
 if __name__ == '__main__':
@@ -161,6 +164,10 @@ if __name__ == '__main__':
     args = set_parser()
     # change the time from minute to second
     args.times *= 60
+
+    print(args)
+
+    print("Start training...")
     while True:
         main(args, ids)
         if len(ids) >= args.gpu_nums:
